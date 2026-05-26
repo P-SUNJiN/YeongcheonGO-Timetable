@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영천고 시간표</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── 테마 변수 ── */
+[data-theme="light"] {
+  --bg: #f0f7ff;
+  --surface: #ffffff;
+  --ink: #0d1b2a;
+  --ink2: #3d5470;
+  --ink3: #8daabb;
+  --line: #d6e8f5;
+  --blue: #1a6bc4;
+  --blue-pale: #eef6ff;
+  --blue-dim: #daeeff;
+  --today-bg: #eef6ff;
+  --today-hl: #daeeff;
+  --row-hover: #f3f8fd;
+  --pnum-bg: #eef6ff;
+  --cal-other: #b0c8dd;
+  --cal-today-bg: #1a6bc4;
+  --cal-today-fg: #ffffff;
+  --cal-sel-bg: #daeeff;
+  --cal-sel-fg: #1a6bc4;
+  --toggle-bg: #d6e8f5;
+  --toggle-knob: #ffffff;
+  --shadow: 0 2px 12px rgba(26,107,196,.08);
+}
+[data-theme="dark"] {
+  --bg: #0d1520;
+  --surface: #152030;
+  --ink: #e4eef8;
+  --ink2: #8baec8;
+  --ink3: #4a6a85;
+  --line: #1e3048;
+  --blue: #4d9de0;
+  --blue-pale: #112035;
+  --blue-dim: #1a3550;
+  --today-bg: #112035;
+  --today-hl: #1a3550;
+  --row-hover: #162840;
+  --pnum-bg: #112035;
+  --cal-other: #2a4560;
+  --cal-today-bg: #4d9de0;
+  --cal-today-fg: #ffffff;
+  --cal-sel-bg: #1a3550;
+  --cal-sel-fg: #4d9de0;
+  --toggle-bg: #4d9de0;
+  --toggle-knob: #0d1520;
+  --shadow: 0 2px 16px rgba(0,0,0,.4);
+}
+
+html, body {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Noto Sans KR', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background .25s, color .25s;
+}
+
+.page {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 0 22px 80px;
+}
+
+/* ── 헤더 ── */
+.hd {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 38px 0 18px;
+  border-bottom: 1.5px solid var(--ink);
+  margin-bottom: 26px;
+  transition: border-color .25s;
+}
+.hd-l h1 {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+}
+.hd-l h1 b { color: var(--blue); }
+.hd-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink3);
+  margin-top: 4px;
+  letter-spacing: 0.04em;
+}
+.hd-r {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* ── 다크모드 토글 ── */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  user-select: none;
+}
+.theme-toggle .t-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.toggle-track {
+  width: 36px; height: 20px;
+  background: var(--toggle-bg);
+  border-radius: 10px;
+  position: relative;
+  transition: background .2s;
+}
+.toggle-knob {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 14px; height: 14px;
+  background: var(--toggle-knob);
+  border-radius: 50%;
+  transition: transform .2s, background .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+[data-theme="dark"] .toggle-knob { transform: translateX(16px); }
+
+/* ── 컨트롤 ── */
+.controls {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.ctrl-block { display: flex; flex-direction: column; gap: 5px; }
+.ctrl-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--ink3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.btn-row { display: flex; }
+.cbtn {
+  padding: 7px 13px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-right: none;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink3);
+  cursor: pointer;
+  transition: all .12s;
+}
+.cbtn:last-child { border-right: 1px solid var(--line); }
+.cbtn:hover { color: var(--blue); background: var(--blue-pale); }
+.cbtn.on { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 700; }
+
+.go-btn {
+  padding: 8px 20px;
+  background: var(--ink);
+  border: none;
+  color: var(--bg);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background .12s;
+  white-space: nowrap;
+}
+.go-btn:hover { background: var(--blue); }
+.go-btn:active { transform: scale(.97); }
+
+/* ── 메인 그리드: 달력 + 시간표 ── */
+.main-grid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 560px) {
+  .main-grid { grid-template-columns: 1fr; }
+}
+
+/* ── 달력 ── */
+.cal-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  transition: background .25s, border-color .25s;
+  position: sticky;
+  top: 20px;
+}
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.cal-month {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.cal-nav {
+  display: flex; gap: 2px;
+}
+.cal-nav-btn {
+  width: 24px; height: 24px;
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--ink3);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s;
+}
+.cal-nav-btn:hover { color: var(--blue); border-color: var(--blue); }
+
+.cal-grid {
+  padding: 10px 10px 12px;
+}
+.cal-dow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+.cal-dow span {
+  text-align: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--ink3);
+  letter-spacing: 0.04em;
+  padding: 2px 0;
+}
+.cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--ink);
+  transition: background .1s, color .1s;
+  position: relative;
+}
+.cal-day:hover { background: var(--blue-pale); color: var(--blue); }
+.cal-day.other-month { color: var(--cal-other); }
+.cal-day.today {
+  background: var(--cal-today-bg);
+  color: var(--cal-today-fg);
+  font-weight: 700;
+}
+.cal-day.in-week {
+  background: var(--cal-sel-bg);
+  color: var(--cal-sel-fg);
+  font-weight: 600;
+}
+.cal-day.today.in-week {
+  background: var(--cal-today-bg);
+  color: var(--cal-today-fg);
+}
+.cal-day.sun { color: #e05c5c; }
+.cal-day.sat { color: var(--blue); }
+.cal-day.sun.other-month { color: rgba(224,92,92,.35); }
+.cal-day.sat.other-month { color: var(--cal-other); }
+
+/* ── 시간표 패널 ── */
+.tt-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  transition: background .25s, border-color .25s;
+}
+
+.tt-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px 11px;
+  border-bottom: 1px solid var(--line);
+}
+.tt-panel-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.tt-panel-week {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink3);
+}
+
+/* 상태 */
+.state-box {
+  padding: 44px 16px;
+  text-align: center;
+  color: var(--ink3);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.spin {
+  display: inline-block;
+  width: 13px; height: 13px;
+  border: 2px solid var(--line);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin .65s linear infinite;
+  vertical-align: middle;
+  margin-right: 5px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 시간표 테이블 */
+.tt-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+
+thead th {
+  padding: 9px 6px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink2);
+  border-bottom: 1.5px solid var(--ink);
+  white-space: nowrap;
+}
+thead th.ph {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--ink3);
+  width: 36px;
+  letter-spacing: 0.06em;
+}
+thead th .dn { display: block; font-size: 12px; font-weight: 700; }
+thead th .dd {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--ink3);
+  margin-top: 1px;
+}
+thead th.tc .dn { color: var(--blue); }
+thead th.tc .dd { color: var(--blue); opacity: .7; }
+
+tbody tr { border-bottom: 1px solid var(--line); }
+tbody tr:last-child { border-bottom: none; }
+tbody td {
+  padding: 10px 6px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  vertical-align: middle;
+  min-width: 68px;
+  transition: background .1s;
+}
+tbody td.pn {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--blue);
+  background: var(--pnum-bg);
+  width: 36px;
+  border-right: 1px solid var(--line);
+}
+tbody td.blank { color: var(--line); }
+tbody td.tc { background: var(--today-bg); }
+tbody tr:hover td:not(.pn) { background: var(--row-hover); }
+tbody tr:hover td.tc { background: var(--today-hl); }
+tbody tr { animation: rowIn .2s ease both; }
+@keyframes rowIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- 헤더 -->
+  <div class="hd">
+    <div class="hd-l">
+      <h1>영천고등학교 <b>시간표</b></h1>
+      <div class="hd-meta">NEIS · 2025학년도 · 경상북도교육청</div>
+    </div>
+    <div class="hd-r">
+      <div class="theme-toggle" id="themeToggle">
+        <span class="t-label" id="themeLabel">LIGHT</span>
+        <div class="toggle-track"><div class="toggle-knob"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 컨트롤 -->
+  <div class="controls">
+    <div class="ctrl-block">
+      <div class="ctrl-label">학년</div>
+      <div class="btn-row" id="gradeRow">
+        <button class="cbtn on" data-g="1">1</button>
+        <button class="cbtn" data-g="2">2</button>
+        <button class="cbtn" data-g="3">3</button>
+      </div>
+    </div>
+    <div class="ctrl-block">
+      <div class="ctrl-label">반</div>
+      <div class="btn-row" id="classRow">
+        <button class="cbtn on" data-c="1">1</button>
+        <button class="cbtn" data-c="2">2</button>
+        <button class="cbtn" data-c="3">3</button>
+        <button class="cbtn" data-c="4">4</button>
+        <button class="cbtn" data-c="5">5</button>
+        <button class="cbtn" data-c="6">6</button>
+      </div>
+    </div>
+    <button class="go-btn" id="goBtn">조회</button>
+  </div>
+
+  <!-- 달력 + 시간표 -->
+  <div class="main-grid">
+
+    <!-- 달력 -->
+    <div class="cal-card">
+      <div class="cal-header">
+        <span class="cal-month" id="calMonth">--</span>
+        <div class="cal-nav">
+          <button class="cal-nav-btn" id="calPrev">‹</button>
+          <button class="cal-nav-btn" id="calNext">›</button>
+        </div>
+      </div>
+      <div class="cal-grid">
+        <div class="cal-dow">
+          <span style="color:#e05c5c">일</span>
+          <span>월</span><span>화</span><span>수</span><span>목</span><span>금</span>
+          <span style="color:var(--blue)">토</span>
+        </div>
+        <div class="cal-days" id="calDays"></div>
+      </div>
+    </div>
+
+    <!-- 시간표 패널 -->
+    <div class="tt-panel">
+      <div class="tt-panel-header">
+        <span class="tt-panel-title" id="panelTitle">시간표</span>
+        <span class="tt-panel-week" id="panelWeek"></span>
+      </div>
+      <div id="ttArea">
+        <div class="state-box">학년·반 선택 후 조회하거나<br>달력에서 주를 선택하세요</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const KEY  = '1d63ff29704249d9b9074429ceeb7682';
+const BASE = 'https://open.neis.go.kr/hub';
+const WDAYS = ['월','화','수','목','금'];
+
+let grade = 1, cls = 1;
+let schoolCode = null;
+let selectedMonday = null; // 현재 선택된 주의 월요일
+let calYear, calMonth;
+
+const $ = id => document.getElementById(id);
+
+/* ── 유틸 ── */
+const pad = n => String(n).padStart(2,'0');
+const fmt = d => `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
+
+function getMondayOf(d) {
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const m = new Date(d);
+  m.setDate(d.getDate() + diff);
+  m.setHours(0,0,0,0);
+  return m;
+}
+
+function getWeekDates(monday) {
+  return Array.from({length:5}, (_,i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
+  });
+}
+
+function isToday(d) {
+  const n = new Date();
+  return d.getFullYear()===n.getFullYear() && d.getMonth()===n.getMonth() && d.getDate()===n.getDate();
+}
+
+function isSameDay(a, b) {
+  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+}
+
+/* ── 학교코드 ── */
+async function getSchoolCode() {
+  if (schoolCode) return;
+  try {
+    const r = await fetch(`${BASE}/schoolInfo?KEY=${KEY}&Type=json&ATPT_OFCDC_SC_CODE=B10&SCHUL_NM=%EC%98%81%EC%B2%9C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90`);
+    const j = await r.json();
+    if (j.schoolInfo) {
+      const hit = j.schoolInfo[1].row.find(s => s.SCHUL_NM === '영천고등학교');
+      if (hit) { schoolCode = hit.SD_SCHUL_CODE; return; }
+    }
+  } catch(e) {}
+  schoolCode = '7380292';
+}
+
+/* ── 달력 렌더 ── */
+function renderCal() {
+  const y = calYear, m = calMonth;
+  $('calMonth').textContent = `${y}년 ${m+1}월`;
+
+  const first = new Date(y, m, 1);
+  const last  = new Date(y, m+1, 0);
+  const startDow = first.getDay(); // 0=일
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // 선택된 주의 날짜들
+  const selDates = selectedMonday ? getWeekDates(selectedMonday).map(d => fmt(d)) : [];
+
+  let html = '';
+
+  // 이전달 채우기
+  for (let i = 0; i < startDow; i++) {
+    const d = new Date(y, m, 1 - (startDow - i));
+    const inW = selDates.includes(fmt(d));
+    html += `<div class="cal-day other-month${inW?' in-week':''}" data-date="${fmt(d)}">${d.getDate()}</div>`;
+  }
+
+  // 이번달
+  for (let d = 1; d <= last.getDate(); d++) {
+    const date = new Date(y, m, d);
+    const dow = date.getDay();
+    const todayCls = isToday(date) ? ' today' : '';
+    const inW = selDates.includes(fmt(date)) ? ' in-week' : '';
+    const dowCls = dow===0 ? ' sun' : dow===6 ? ' sat' : '';
+    html += `<div class="cal-day${todayCls}${inW}${dowCls}" data-date="${fmt(date)}">${d}</div>`;
+  }
+
+  // 다음달 채우기
+  const remaining = 42 - (startDow + last.getDate());
+  for (let i = 1; i <= remaining; i++) {
+    const date = new Date(y, m+1, i);
+    const inW = selDates.includes(fmt(date)) ? ' in-week' : '';
+    html += `<div class="cal-day other-month${inW}" data-date="${fmt(date)}">${i}</div>`;
+  }
+
+  $('calDays').innerHTML = html;
+
+  // 날짜 클릭
+  $('calDays').querySelectorAll('.cal-day').forEach(el => {
+    el.addEventListener('click', () => {
+      const parts = el.dataset.date;
+      const d = new Date(parseInt(parts.slice(0,4)), parseInt(parts.slice(4,6))-1, parseInt(parts.slice(6,8)));
+      selectedMonday = getMondayOf(d);
+      renderCal();
+      fetchTimetable();
+    });
+  });
+}
+
+/* ── 시간표 fetch ── */
+async function fetchTimetable() {
+  if (!selectedMonday) { selectedMonday = getMondayOf(new Date()); }
+
+  const dates = getWeekDates(selectedMonday);
+  const from = fmt(dates[0]), to = fmt(dates[4]);
+
+  $('panelTitle').textContent = `${grade}학년 ${cls}반`;
+  $('panelWeek').textContent  = `${from.slice(4,6)}/${from.slice(6,8)} — ${to.slice(4,6)}/${to.slice(6,8)}`;
+  $('ttArea').innerHTML = '<div class="state-box"><span class="spin"></span>불러오는 중</div>';
+
+  await getSchoolCode();
+
+  const url = `${BASE}/hisTimetable?KEY=${KEY}&Type=json&ATPT_OFCDC_SC_CODE=B10&SD_SCHUL_CODE=${schoolCode}&AY=2025&SEM=1&GRADE=${grade}&CLASS_NM=${cls}&TI_FROM_YMD=${from}&TI_TO_YMD=${to}`;
+
+  try {
+    const res  = await fetch(url);
+    const json = await res.json();
+
+    if (json.RESULT || !json.hisTimetable) {
+      $('ttArea').innerHTML = `<div class="state-box">시간표 정보가 없습니다<br><small style="font-size:11px;opacity:.6;display:block;margin-top:4px">${grade}학년 ${cls}반 데이터 없음</small></div>`;
+      return;
+    }
+    const rows = json.hisTimetable[1]?.row;
+    if (!rows?.length) {
+      $('ttArea').innerHTML = `<div class="state-box">이 주의 시간표가 없습니다</div>`;
+      return;
+    }
+
+    const dateMap = {};
+    dates.forEach((d,i) => { dateMap[fmt(d)] = i; });
+
+    const grid = Array.from({length:9}, () => Array(5).fill(''));
+    let maxP = 0;
+    rows.forEach(r => {
+      const di = dateMap[r.ALL_TI_YMD];
+      if (di === undefined) return;
+      const p = parseInt(r.PERIO) - 1;
+      if (p < 0 || p >= 9) return;
+      grid[p][di] = r.ITRT_CNTNT || '';
+      if (p+1 > maxP) maxP = p+1;
+    });
+    if (maxP === 0) maxP = 7;
+
+    // 헤더
+    let thead = `<thead><tr><th class="ph">교시</th>`;
+    dates.forEach((d,i) => {
+      const tc = isToday(d) ? ' tc' : '';
+      thead += `<th class="${tc}"><span class="dn">${WDAYS[i]}</span><span class="dd">${pad(d.getMonth()+1)}/${pad(d.getDate())}</span></th>`;
+    });
+    thead += `</tr></thead>`;
+
+    // 바디
+    let tbody = '<tbody>';
+    for (let p = 0; p < maxP; p++) {
+      tbody += `<tr style="animation-delay:${p*28}ms">`;
+      tbody += `<td class="pn">${p+1}</td>`;
+      for (let d = 0; d < 5; d++) {
+        const subj = grid[p][d];
+        const tc = isToday(dates[d]) ? ' tc' : '';
+        tbody += subj
+          ? `<td class="${tc}">${subj}</td>`
+          : `<td class="blank${tc}">·</td>`;
+      }
+      tbody += `</tr>`;
+    }
+    tbody += '</tbody>';
+
+    $('ttArea').innerHTML = `<div class="tt-scroll"><table>${thead}${tbody}</table></div>`;
+  } catch(e) {
+    $('ttArea').innerHTML = `<div class="state-box">오류: ${e.message}</div>`;
+  }
+}
+
+/* ── 다크모드 ── */
+const html = document.documentElement;
+let dark = localStorage.getItem('yc_dark') === '1';
+function applyTheme() {
+  html.setAttribute('data-theme', dark ? 'dark' : 'light');
+  $('themeLabel').textContent = dark ? 'DARK' : 'LIGHT';
+  localStorage.setItem('yc_dark', dark ? '1' : '0');
+}
+applyTheme();
+$('themeToggle').addEventListener('click', () => { dark = !dark; applyTheme(); });
+
+/* ── 이벤트 ── */
+$('gradeRow').addEventListener('click', e => {
+  const b = e.target.closest('.cbtn'); if (!b) return;
+  $('gradeRow').querySelectorAll('.cbtn').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); grade = parseInt(b.dataset.g);
+});
+$('classRow').addEventListener('click', e => {
+  const b = e.target.closest('.cbtn'); if (!b) return;
+  $('classRow').querySelectorAll('.cbtn').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); cls = parseInt(b.dataset.c);
+});
+$('goBtn').addEventListener('click', () => {
+  selectedMonday = getMondayOf(new Date());
+  renderCal();
+  fetchTimetable();
+});
+
+// 달력 월 이동
+$('calPrev').addEventListener('click', () => {
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCal();
+});
+$('calNext').addEventListener('click', () => {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCal();
+});
+
+/* ── 초기화 ── */
+const now = new Date();
+calYear  = now.getFullYear();
+calMonth = now.getMonth();
+selectedMonday = getMondayOf(now);
+renderCal();
+</script>
+</body>
+</html>
